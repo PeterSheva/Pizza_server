@@ -1,27 +1,26 @@
 const Dish = require('../models/dishes');
 
 module.exports.getChefDishes = (req, res, next) => {
-  const { dayId } = req.params;
+  const { chefId } = req.params;
 
-  Dish.find({ day: { _id: chefId } })
-    .sort({ time: 'asc' })
-    .populate('day')
-    .then((appointment) => {
-      if (!appointment) {
-        throw new Error('Нет пользователей');
+  Dish.find({ chef: { _id: chefId } })
+    .populate('chef')
+    .then((dish) => {
+      if (!dish) {
+        throw new Error('Нет блюд');
       }
 
-      res.send(appointment);
+      res.send(dish);
     })
     .catch(next);
 };
 
 module.exports.addDishToChef = (req, res, next) => {
-  const { dayId, time, half } = req.body;
+  const { chefId, dishName } = req.body;
 
-  Dish.create({ time, half, day: dayId })
-    .then((appointment) => {
-      res.send(appointment);
+  Dish.create({ chef: chefId, dishName })
+    .then((dish) => {
+      res.send(dish);
     })
     .catch(next);
 };
@@ -30,16 +29,46 @@ module.exports.deleteDish = (req, res, next) => {
   const { _id } = req.body;
 
   Dish.findById(_id)
-    .then((appointment) => {
-      if (!appointment) {
-        throw new NotFoundError('Такого дня не существует');
+    .then((dish) => {
+      if (!dish) {
+        throw new NotFoundError('Такого блюда не существует');
       }
-      appointment
+      dish
         .remove()
         .then(() => {
-          res.send(appointment);
+          res.send(dish);
         })
         .catch(next);
+    })
+    .catch(next);
+};
+
+module.exports.switchChef = (req, res, next) => {
+  const { chefId } = req.body;
+  const { dishId } = req.params
+
+  Dish.findByIdAndUpdate(dishId, { chef: chefId }, { new: true, runValidators: true })
+    .then((dish) => {
+      if (!dish) {
+        throw new NotFoundError('Такого блюда не существует');
+      }
+
+      res.send(dish);
+    })
+    .catch(next);
+};
+
+module.exports.changeDish = (req, res, next) => {
+  const { newName } = req.body;
+  const { dishId } = req.params
+
+  Dish.findByIdAndUpdate(dishId, { dishName: newName }, { new: true, runValidators: true })
+    .then((dish) => {
+      if (!dish) {
+        throw new NotFoundError('Такого блюда не существует');
+      }
+
+      res.send(dish);
     })
     .catch(next);
 };
